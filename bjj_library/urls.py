@@ -19,6 +19,7 @@ from django.urls import include, path
 from rest_framework import routers
 
 from api import views
+from users.views import Login, Logout
 
 router = routers.DefaultRouter()
 router.register(r'video', views.VideoViewSet)
@@ -28,6 +29,8 @@ router.register(r'Tag', views.TagViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include(router.urls)),
+    path('login/', Login.as_view(), name='login'),
+    path('logout/', Logout.as_view(), name='logout')
 ]
 
 urlpatterns += router.urls
