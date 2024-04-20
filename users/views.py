@@ -37,6 +37,7 @@ class Login(ObtainAuthToken):
             if user.is_active:
                 print('pasa por aqui', user)
                 token,created = Token.objects.get_or_create(user=user)
+                
                 user_serializer = UserTokenSerializer(user)
                 print(created)
                 if created:
