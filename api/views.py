@@ -4,11 +4,12 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
 from django.shortcuts import render
-from .serializers import VideoSerializer, VideoTagSerializer, TagSerializer
-from .models import Video, Tag, VideoTag
+from .serializers import VideoSerializer, VideoTagSerializer, TagSerializer, VideoListSerializer
+from .models import Video, Tag, VideoTag, VideoList
 from users.authentication_mixins import Authentication
+from users.permission_mixins import Permission
 
-class VideoViewSet(Authentication, viewsets.ModelViewSet):
+class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
     authentication_classes = []
@@ -83,3 +84,7 @@ class VideoTagViewSet(Authentication, viewsets.ModelViewSet):
 
         return Response(serializer_videoTag.errors, status=status.HTTP_400_BAD_REQUEST)
        
+class VideoListViewSet(Authentication, viewsets.ModelViewSet):
+    queryset = VideoList.objects.all()
+    serializer_class = VideoListSerializer
+    

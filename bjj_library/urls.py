@@ -25,6 +25,7 @@ router = routers.DefaultRouter()
 router.register(r'video', views.VideoViewSet)
 router.register(r'videoTag', views.VideoTagViewSet)
 router.register(r'Tag', views.TagViewSet)
+router.register(r'VideoList', views.VideoListViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
