@@ -30,16 +30,13 @@ class UserToken(APIView):
 class Login(ObtainAuthToken):
 
     def post(self, request, *args, **kwargs):
-        print('request', request.data)
         login_serializer = self.serializer_class(data = request.data, context = {'request':request})
         if login_serializer.is_valid():
             user = login_serializer.validated_data['user']
             if user.is_active:
-                print('pasa por aqui', user)
                 token,created = Token.objects.get_or_create(user=user)
                 
                 user_serializer = UserTokenSerializer(user)
-                print(created)
                 if created:
                     return Response({
                         'token':token.key,

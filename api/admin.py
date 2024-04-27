@@ -6,7 +6,7 @@ from .models import Video, Tag, VideoTag, VideoList, VideoListItem
 
 @admin.register(Video)
 class VideoAdmin(admin.ModelAdmin):
-    list_display = ('title',)
+    list_display = ('title', 'visibility')
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):

@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework import viewsets, mixins
 from rest_framework import status
 from rest_framework.response import Response
@@ -15,22 +16,35 @@ class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
     authentication_classes = []
     http_method_names = ['get', 'post', 'put', 'delete']
 
+    def get_queryset (self): 
+        return Video.objects.filter(Q(owner=self.user) | Q(visibility='public'))
+
     def create(self, request): 
-        data = request.data
-        videoData = {
-            'title': data['title'],
-            'url': data['url'],
-            'youtubeID': data['youtubeID'],
-        }
-        video_serializer = self.serializer_class(data = videoData)
+        data = request.data 
+        video_serializer = self.serializer_class(data = data)        
+        
         # validation
         if video_serializer.is_valid():
-            video_serializer.save()
+            video = video_serializer.save()
+
+            #Insert video in List
+            if 'list' in data and data['list'] is not None:
+                list = VideoList.objects.filter(id=data['list']).first()
+                if list is None: 
+                    video.delete()
+                    return Response({'message': 'No se a encontrado la lista de videos a la cual se quiere inserir.'},status=status.HTTP_400_BAD_REQUEST)
+
+                if list.owner != self.user:
+                    video.delete()
+                    return Response({'message': 'No tienes permisos para publicar un video en esta Lista.'},status=status.HTTP_403_FORBIDDEN)
+            
+                list.videos.add(video.id)
+                list.save()
+
             return Response(video_serializer.data, status=status.HTTP_200_OK)
 
         return Response(video_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
     def update(self, request, pk=None):
         video = Video.objects.filter(id = pk).first()
         data = request.data
@@ -85,6 +99,14 @@ class VideoTagViewSet(Authentication, viewsets.ModelViewSet):
         return Response(serializer_videoTag.errors, status=status.HTTP_400_BAD_REQUEST)
        
 class VideoListViewSet(Authentication, viewsets.ModelViewSet):
-    queryset = VideoList.objects.all()
     serializer_class = VideoListSerializer
+    queryset = VideoList.objects.all()
+    
+    def get_queryset (self): 
+        return VideoList.objects.filter(Q(owner=None) | Q(owner=self.user))
+
+    def create(self, request): 
+        
+        pass
+
     

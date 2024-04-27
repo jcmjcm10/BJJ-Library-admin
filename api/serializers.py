@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Video, Tag, VideoTag, VideoList
+from .models import Video, Tag, VideoTag, VideoList, VideoListItem
 from django.contrib.auth import get_user_model, authenticate
 import json 
 
@@ -36,16 +36,15 @@ class VideoTagSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class VideoListSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = VideoList
         fields ='__all__'    
     
     def get_videos(self, instance):
-        videos = instance.videos.all()
+        videoListItems = VideoListItem.objects.filter(videoList=instance.id).order_by('order')
         videoList = []
-        for video in videos:
-            videoSerializer = VideoSerializer(video)
+        for videoListItem in videoListItems:
+            videoSerializer = VideoSerializer(videoListItem.video)
             videoList.append(videoSerializer.data)
         return videoList
 
