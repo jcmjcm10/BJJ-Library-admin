@@ -21,8 +21,6 @@ class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
 
     def create(self, request): 
         data = request.data 
-        print('*************************************************')
-        print(data)
         data['owner'] = self.user.id
         video_serializer = self.serializer_class(data = data)        
         
@@ -69,6 +67,9 @@ class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
     def destroy(self, request, pk=None):  
         video = Video.objects.filter(id=pk).first()
         if video:
+
+            if not video.owner == self.user and not self.user.is_staff:
+                return Response('No tienes permisos para eliminar este video.',status=status.HTTP_403_FORBIDDEN)
             video.delete()
             return Response('Eliminación correcta',status=status.HTTP_200_OK)
         return Response('Video no encontrado',status=status.HTTP_400_BAD_REQUEST)
@@ -100,16 +101,32 @@ class VideoTagViewSet(Authentication, viewsets.ModelViewSet):
             return Response(serializer_videoTag.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer_videoTag.errors, status=status.HTTP_400_BAD_REQUEST)
-       
+
 class VideoListViewSet(Authentication, viewsets.ModelViewSet):
     serializer_class = VideoListSerializer
     queryset = VideoList.objects.all()
-    
+
     def get_queryset (self): 
         return VideoList.objects.filter(Q(owner=None) | Q(owner=self.user))
 
     def create(self, request): 
-        
-        pass
+        data = request.data
+        data['owner'] = self.user.id
+        videolistSerializer = self.serializer_class(data=data)
+        if videolistSerializer.is_valid():
+            videolistSerializer.save()
+            return Response(videolistSerializer.data,status=status.HTTP_201_CREATED)
 
+        return Response(videolistSerializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):  
+        videoList = VideoList.objects.filter(id=pk).first()
+        if videoList:
+            if not videoList.owner == self.user:
+                return Response('No tienes permisos para eliminar esta lista.',status=status.HTTP_403_FORBIDDEN)
+            videoList.delete()
+            return Response('Eliminación correcta',status=status.HTTP_200_OK)
+        return Response('Lista no encontrado',status=status.HTTP_400_BAD_REQUEST)
+
+        
     
