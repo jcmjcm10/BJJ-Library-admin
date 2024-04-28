@@ -21,6 +21,9 @@ class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
 
     def create(self, request): 
         data = request.data 
+        print('*************************************************')
+        print(data)
+        data['owner'] = self.user.id
         video_serializer = self.serializer_class(data = data)        
         
         # validation
