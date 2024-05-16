@@ -109,6 +109,14 @@ class VideoListViewSet(Authentication, viewsets.ModelViewSet):
     def get_queryset (self): 
         return VideoList.objects.filter(Q(owner=None) | Q(owner=self.user))
 
+    # def list (self, request): 
+    #     qs = VideoList.objects.filter(Q(owner=None) | Q(owner=self.user))
+    #     videoListSerializer = VideoListSerializer(data=qs, many=True)
+    #     videoListSerializer.is_valid()
+    #     for videoList in  videoListSerializer.data:
+    #         print(videoList)
+    #     return Response(videoListSerializer.data, status=status.HTTP_200_OK)
+
     def create(self, request): 
         data = request.data
         data['owner'] = self.user.id
@@ -128,5 +136,32 @@ class VideoListViewSet(Authentication, viewsets.ModelViewSet):
             return Response('Eliminación correcta',status=status.HTTP_200_OK)
         return Response('Lista no encontrado',status=status.HTTP_400_BAD_REQUEST)
 
-        
-    
+    def update(self, request, pk=None):
+        #Insert video in List    
+        data = request.data
+        if not 'op' in data:
+            return Response({'message': 'No se ha especificado el tipo de operación'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if 'video' in data:
+            video_list = VideoList.objects.filter(id=pk).first()
+            if video_list is None: 
+                return Response({'message': 'No se a encontrado la lista de videos a la cual se quiere inserir.'},status=status.HTTP_400_BAD_REQUEST)
+           
+            if data['op'] == 'insert':           
+                if video_list.owner != self.user:
+                    return Response({'message': 'No tienes permisos para publicar un video en esta Lista.'},status=status.HTTP_403_FORBIDDEN)
+
+                video = Video.objects.filter(id=data['video']).first()
+                if video:
+                    video_list.videos.add(video.id)
+                    video_list.save()
+                    videoListSerializer = VideoListSerializer(video_list)
+                    return Response(videoListSerializer.data, status=status.HTTP_200_OK)
+                
+            elif data['op'] == 'remove':
+                if video_list:
+                    video_list.videos.remove(data['video'])
+                    video_list.save()
+                    return Response({'message': 'El video se a eliminado de la lista correctamente.'}, status=status.HTTP_200_OK) 
+
+        return Response({'message': 'Error, petición invalida.'}, status=status.HTTP_400_BAD_REQUEST)
