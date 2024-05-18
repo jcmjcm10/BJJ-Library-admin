@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Video, Tag, VideoTag, VideoList, VideoListItem
+from users.models import User
 from django.contrib.auth import get_user_model, authenticate
 import json 
 
@@ -50,9 +51,16 @@ class VideoListSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         videos = self.get_videos(instance)
+        
+        if instance.owner:
+            user_name = instance.owner.username
+        else:
+            user_name = None
+
         return {
         'id': instance.id,
         'title': instance.title,
         'videos': videos,
+        'owner': user_name
         }
 
