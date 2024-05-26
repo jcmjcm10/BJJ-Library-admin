@@ -6,9 +6,17 @@ from rest_framework.permissions import AllowAny
 
 from django.shortcuts import render
 from .serializers import VideoSerializer, VideoTagSerializer, TagSerializer, VideoListSerializer
-from .models import Video, Tag, VideoTag, VideoList
+from .models import Video, Tag, VideoTag, VideoList, VideoListItem
 from users.authentication_mixins import Authentication
 from users.permission_mixins import Permission
+
+def getLastOrderPlayList(videoListId):
+    videolistItems = VideoListItem.objects.filter(videoList = videoListId)
+    lastOrder = videolistItems.order_by('-order').first()
+    if lastOrder:
+        return lastOrder.order
+    else:
+        return 0
 
 class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
     queryset = Video.objects.all()
@@ -38,8 +46,14 @@ class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
                 if list.owner != self.user:
                     video.delete()
                     return Response({'message': 'No tienes permisos para publicar un video en esta Lista.'},status=status.HTTP_403_FORBIDDEN)
-            
-                list.videos.add(video.id)
+
+                getLastOrderPlayList(list.id)
+                videoListItem = VideoListItem.objects.create(
+                    videoList = list,
+                    video = video,
+                    order = getLastOrderPlayList(list.id) + 1,
+                )
+                videoListItem.save()
                 list.save()
 
             return Response(video_serializer.data, status=status.HTTP_200_OK)
@@ -153,8 +167,12 @@ class VideoListViewSet(Authentication, viewsets.ModelViewSet):
 
                 video = Video.objects.filter(id=data['video']).first()
                 if video:
-                    video_list.videos.add(video.id)
-                    video_list.save()
+                    videoListItem = VideoListItem.objects.create(
+                        videoList = video_list,
+                        video = video,
+                        order = getLastOrderPlayList(video_list.id) + 1,
+                    )
+                    videoListItem.save()
                     videoListSerializer = VideoListSerializer(video_list)
                     return Response(videoListSerializer.data, status=status.HTTP_200_OK)
                 
@@ -162,6 +180,47 @@ class VideoListViewSet(Authentication, viewsets.ModelViewSet):
                 if video_list:
                     video_list.videos.remove(data['video'])
                     video_list.save()
+                    
+                    # Reorder
+                    videoListItems = VideoListItem.objects.filter(videoList = video_list).order_by('order')
+
+                    orderValue = 1
+                    for item in videoListItems:
+                        item.order = orderValue
+                        item.save()
+                        orderValue += 1
+
                     return Response({'message': 'El video se a eliminado de la lista correctamente.'}, status=status.HTTP_200_OK) 
 
+            elif data['op'] == 'up':
+                videoListItem = VideoListItem.objects.filter(videoList=pk).order_by('order')
+                print(videoListItem)
+                for videoItem in videoListItem:
+                    if videoItem.video.id == data['video']:
+                        if videoItem_ant is None:
+                            return Response({'message': 'El vido ya se encuentra en la primera posicion'}, status=status.HTTP_400_BAD_REQUEST)
+                        aux_order = videoItem.order
+                        videoItem.order = videoItem_ant.order
+                        videoItem_ant.order = aux_order
+                        videoItem.save()
+                        videoItem_ant.save()
+                        print('se izo esto up')
+                        break
+                    videoItem_ant = videoItem
+                return Response({'message': 'Operacion realizada con exito'}, status=status.HTTP_200_OK)
+            elif data['op'] == 'down':
+                videoListItem = VideoListItem.objects.filter(videoList=pk).order_by('order')
+                print(videoListItem)
+                videoItem_ant = None
+                for videoItem in videoListItem:
+                    if videoItem_ant is not None and videoItem_ant.video.id == data['video']:
+                        aux_order = videoItem.order
+                        videoItem.order = videoItem_ant.order
+                        videoItem_ant.order = aux_order
+                        videoItem.save()
+                        videoItem_ant.save()
+                        print('se izo esto down')
+                        break
+                    videoItem_ant = videoItem
+                return Response({'message': 'Operacion realizada con exito'}, status=status.HTTP_200_OK)
         return Response({'message': 'Error, petición invalida.'}, status=status.HTTP_400_BAD_REQUEST)
