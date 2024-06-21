@@ -7,8 +7,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import viewsets    
 
-from users.api.serializers import UserTokenSerializer
+from users.api.serializers import UserTokenSerializer, UserSerializer
+from users.models import User
 
 class UserToken(APIView):
     
@@ -89,4 +91,14 @@ class Logout(APIView):
         except:
             Response({'error': 'No se ha encontrado token en la petición.'}, status=status.HTTP_400_BAD_REQUEST)
             
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.filter(username='dlkfjaselkfjeisdfaseio')
+    serializer_class = UserSerializer
+    def create(self, request, *args, **kwargs):
+        user_serializer = self.serializer_class(data=request.data)
+
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response({'message': 'Usuario creado correctamente.'}, status=status.HTTP_201_CREATED)
+        return Response({'message': user_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         

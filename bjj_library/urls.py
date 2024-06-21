@@ -19,13 +19,14 @@ from django.urls import include, path
 from rest_framework import routers
 
 from api import views
-from users.views import Login, Logout
+from users.views import Login, Logout, UserViewSet
 
 router = routers.DefaultRouter()
 router.register(r'video', views.VideoViewSet)
 router.register(r'videoTag', views.VideoTagViewSet)
 router.register(r'Tag', views.TagViewSet)
 router.register(r'VideoList', views.VideoListViewSet)
+router.register(r'user', UserViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
