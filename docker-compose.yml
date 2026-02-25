@@ -1,0 +1,11 @@
+services:
+  bjj-library_django:
+    container_name: bjj_library_django
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    command: ["python3.12", "/app/manage.py", "runserver", "0.0.0.0:8000"]
+    ports:
+      - 8000:8000

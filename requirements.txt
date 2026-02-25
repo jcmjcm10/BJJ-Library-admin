@@ -1,0 +1,5 @@
+django==5.2
+djangorestframework==3.16.1
+django-cors-headers==4.9.0
+django-simple-history==3.11.0
+pillow==12.1.1
