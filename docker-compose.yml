@@ -1,11 +1,14 @@
 services:
-  bjj-library_django:
-    container_name: bjj_library_django
+  bjj-library:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: bjj_library_dev
     volumes:
       - .:/app
-    command: ["python3.12", "/app/manage.py", "runserver", "0.0.0.0:8000"]
     ports:
-      - 8000:8000
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    command: ["python3.12", "/app/manage.py", "runserver", "0.0.0.0:8000"]
