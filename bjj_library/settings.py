@@ -26,8 +26,15 @@ SECRET_KEY = 'django-insecure-9qdpr!@$mn&mi=2l905#t9$x1fe_kh9g7$)tf965huvviscw*7
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else []
+ALLOWED_HOSTS = ['*']
 
+FORCE_SCRIPT_NAME = '/apps/bjj-library'
+USE_X_FORWARDED_HOST = True
+
+# Mirar si aixo es pot cometar
+CSRF_TRUSTED_ORIGINS = [
+    'http://192.168.1.97',
+]
 
 # Application definition
 BASE_APPS = [
@@ -69,6 +76,7 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:9000",
     "https://spiffy-bombolone-e979a6.netlify.app",
+    "http://192.168.1.97"
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -102,7 +110,16 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": os.environ.get("DB_NAME", ""),
+    #     "USER": os.environ.get("DB_USER", ""),
+    #     "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+    #     "HOST": os.environ.get("DB_HOST", "localhost"),
+    #     "PORT": os.environ.get("DB_PORT", "5432"),
+    # }
 }
+
 
 #Rest Framework
 REST_FRAMEWORK = {
