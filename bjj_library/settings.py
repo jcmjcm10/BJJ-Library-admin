@@ -34,6 +34,7 @@ USE_X_FORWARDED_HOST = True
 # Mirar si aixo es pot cometar
 CSRF_TRUSTED_ORIGINS = [
     'http://192.168.1.97',
+    "https://myfatanimals.com",
 ]
 
 # Application definition
@@ -76,7 +77,8 @@ MIDDLEWARE = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:9000",
     "https://spiffy-bombolone-e979a6.netlify.app",
-    "http://192.168.1.97"
+    "http://192.168.1.97",
+    "https://myfatanimals.com",
 ]
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -123,8 +125,9 @@ DATABASES = {
 
 #Rest Framework
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 1000
 }
