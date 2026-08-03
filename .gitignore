@@ -2,3 +2,13 @@
 __pycache__/
 *.py[cod]
 *.pyo
+
+# Base de datos local
+*.sqlite3
+*.sqlite3-*
+
+# Entornos y estáticos
+.venv/
+venv/
+staticfiles/
+.env
