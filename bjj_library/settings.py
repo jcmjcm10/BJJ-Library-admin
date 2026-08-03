@@ -21,21 +21,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-9qdpr!@$mn&mi=2l905#t9$x1fe_kh9g7$)tf965huvviscw*7'
+SECRET_KEY = os.getenv('SECRET_KEY', '')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['*']
+# Lista separada por comas. Default: [] (rechaza todo, salvo con DEBUG=True)
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h.strip()]
 
-FORCE_SCRIPT_NAME = '/apps/bjj-library'
-USE_X_FORWARDED_HOST = True
 
-# Mirar si aixo es pot cometar
-CSRF_TRUSTED_ORIGINS = [
-    'http://192.168.1.97',
-    "https://myfatanimals.com",
-]
+# Lista separada por comas, con esquema incluido (https://dominio). Default: []
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()]
 
 # Application definition
 BASE_APPS = [
@@ -74,14 +70,11 @@ MIDDLEWARE = [
     'simple_history.middleware.HistoryRequestMiddleware',
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:9000",
-    "https://spiffy-bombolone-e979a6.netlify.app",
-    "http://192.168.1.97",
-    "https://myfatanimals.com",
-]
+# Lista separada por comas, con esquema incluido (https://dominio). Default: []
+CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
 
-CORS_ORIGIN_ALLOW_ALL = True
+# Comodin: permite cualquier origen. Default: False (manda CORS_ALLOWED_ORIGINS)
+CORS_ALLOW_ALL_ORIGINS = os.getenv('CORS_ALLOW_ALL_ORIGINS', 'False') == 'True'
 
 ROOT_URLCONF = 'bjj_library.urls'
 
@@ -108,18 +101,14 @@ WSGI_APPLICATION = 'bjj_library.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("DB_NAME", "bjj_library"),
+        "USER": os.environ.get("DB_USERNAME", "bjj_library"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", ""),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
-    # "default": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": os.environ.get("DB_NAME", ""),
-    #     "USER": os.environ.get("DB_USER", ""),
-    #     "PASSWORD": os.environ.get("DB_PASSWORD", ""),
-    #     "HOST": os.environ.get("DB_HOST", "localhost"),
-    #     "PORT": os.environ.get("DB_PORT", "5432"),
-    # }
 }
 
 

@@ -12,3 +12,6 @@ __pycache__/
 venv/
 staticfiles/
 .env
+
+# Variables de entorno reales (la plantilla app.env-example sí se versiona)
+app.env
