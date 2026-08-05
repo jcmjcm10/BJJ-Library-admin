@@ -9,10 +9,17 @@ class UserTokenSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
-    
+
+        fields = ('username', 'email', 'name', 'last_name', 'password')
+        extra_kwargs = {
+            'password': {'write_only': True},
+        }
+
     def create(self,validated_data):
-        user = User(**validated_data)
-        user.set_password(validated_data['password'])
-        user.save()
-        return user
+        return User.objects.create_user(
+            username = validated_data['username'],
+            email = validated_data['email'],
+            name = validated_data.get('name'),
+            last_name = validated_data.get('last_name'),
+            password = validated_data['password'],
+        )
