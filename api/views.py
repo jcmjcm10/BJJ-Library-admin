@@ -62,6 +62,12 @@ class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
     
     def update(self, request, pk=None):
         video = Video.objects.filter(id = pk).first()
+        if video is None:
+            return Response('Video no encontrado',status=status.HTTP_400_BAD_REQUEST)
+
+        if not video.owner == self.user and not self.user.is_staff:
+            return Response('No tienes permisos para editar este video.',status=status.HTTP_403_FORBIDDEN)
+
         data = request.data
         videoData = {
             'title': data['title'],
