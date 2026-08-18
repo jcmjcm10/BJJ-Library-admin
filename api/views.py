@@ -4,11 +4,10 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .serializers import VideoSerializer, VideoTagSerializer, TagSerializer, VideoListSerializer
 from .models import Video, Tag, VideoTag, VideoList, VideoListItem
 from users.authentication_mixins import Authentication
-from users.permission_mixins import Permission
 
 def getLastOrderPlayList(videoListId):
     videolistItems = VideoListItem.objects.filter(videoList = videoListId)
@@ -18,7 +17,7 @@ def getLastOrderPlayList(videoListId):
     else:
         return 0
 
-class VideoViewSet(Authentication, Permission, viewsets.ModelViewSet):
+class VideoViewSet(Authentication, viewsets.ModelViewSet):
     queryset = Video.objects.all()
     serializer_class = VideoSerializer
     authentication_classes = []
@@ -104,16 +103,30 @@ class TagViewSet(Authentication, viewsets.ModelViewSet):
 class VideoTagViewSet(Authentication, viewsets.ModelViewSet):
     queryset = VideoTag.objects.all()
     serializer_class = VideoTagSerializer
-    
-    def get_queryset(self):        
-        return  VideoTag.objects.all()
+
+    def get_queryset(self):
+        if self.user.is_staff:
+            return VideoTag.objects.all()
+        return VideoTag.objects.filter(Q(video__owner=self.user) | Q(video__visibility='public'))
+
+    def canEditVideo(self, video):
+        return video.owner == self.user or self.user.is_staff
 
     def create(self, request):
         data = request.data
+        videoId = data.get('videoId')
+        tagId = data.get('tagId')
+        if videoId is None or tagId is None:
+            return Response({'message': 'Se requieren videoId y tagId.'}, status=status.HTTP_400_BAD_REQUEST)
+
         videoTagData = {
-            'video': data['videoId'],
-            'tag': data['tagId'],
+            'video': videoId,
+            'tag': tagId,
         }
+
+        video = get_object_or_404(Video, pk=videoId)
+        if not self.canEditVideo(video):
+            return Response('No tienes permisos para editar este video.',status=status.HTTP_403_FORBIDDEN)
 
         serializer_videoTag = self.serializer_class(data=videoTagData)
         if serializer_videoTag.is_valid():
@@ -121,6 +134,33 @@ class VideoTagViewSet(Authentication, viewsets.ModelViewSet):
             return Response(serializer_videoTag.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer_videoTag.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        videoTag = VideoTag.objects.filter(id=pk).first()
+        if videoTag is None:
+            return Response('VideoTag no encontrado',status=status.HTTP_400_BAD_REQUEST)
+
+        if not self.canEditVideo(videoTag.video):
+            return Response('No tienes permisos para editar este video.',status=status.HTTP_403_FORBIDDEN)
+
+        # Reasignar el tag a otro video tambien requiere permisos sobre el video destino.
+        videoId = request.data.get('video')
+        if videoId is not None and str(videoId) != str(videoTag.video_id):
+            if not self.canEditVideo(get_object_or_404(Video, pk=videoId)):
+                return Response('No tienes permisos para editar este video.',status=status.HTTP_403_FORBIDDEN)
+
+        return super().update(request, pk=pk)
+
+    def destroy(self, request, pk=None):
+        videoTag = VideoTag.objects.filter(id=pk).first()
+        if videoTag is None:
+            return Response('VideoTag no encontrado',status=status.HTTP_400_BAD_REQUEST)
+
+        if not self.canEditVideo(videoTag.video):
+            return Response('No tienes permisos para editar este video.',status=status.HTTP_403_FORBIDDEN)
+
+        videoTag.delete()
+        return Response('Eliminación correcta',status=status.HTTP_200_OK)
 
 class VideoListViewSet(Authentication, viewsets.ModelViewSet):
     serializer_class = VideoListSerializer
